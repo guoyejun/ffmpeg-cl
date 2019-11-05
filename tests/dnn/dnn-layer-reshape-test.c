@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Guo Yejun
+ * Copyright (c) 2019 Wenqian Xing
  *
  * This file is part of FFmpeg.
  *
