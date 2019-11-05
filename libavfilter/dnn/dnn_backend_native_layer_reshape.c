@@ -50,10 +50,11 @@ int dnn_load_layer_reshape(Layer *layer, AVIOContext *model_file_context, int fi
     return dnn_size;
 }
 
-int dnn_execute_layer_resize(DnnOperand *operands, const int32_t *input_operand_indexes,
+int dnn_execute_layer_reshape(DnnOperand *operands, const int32_t *input_operand_indexes,
                               int32_t output_operand_index, const void *parameters)
 {
     float *output;
+    const float *src;
     const DnnLayerReshapeParams *Reshape_params = (const DnnLayerReshapeParams *)parameters;
     int32_t input_operand_index = input_operand_indexes[0];
     int number = operands[input_operand_index].dims[0];
@@ -72,9 +73,8 @@ int dnn_execute_layer_resize(DnnOperand *operands, const int32_t *input_operand_
     output_operand->data = av_realloc(output_operand->data, output_operand->length);
     if (!output_operand->data)
         return -1;
-    output = output_operand->data;
-    src = input->data;
-    output = src
+    src = output_operand->data;
+    output = src;
 
     return 0;
 }
