@@ -22,13 +22,12 @@
 #define AVFILTER_DNN_DNN_BACKEND_NATIVE_LAYER_DEPTHWISE_H
 
 #include "dnn_backend_native.h"
-
-typedef enum {RELU, TANH, SIGMOID, NONE, LEAKY_RELU} DNNActivationFunc;
-typedef enum {VALID, SAME, SAME_CLAMP_TO_EDGE} DNNConvPaddingParam;
+#include "dnn_backend_native_layer_conv2d.h"
 
 typedef struct DepthwiseConvParams{
-	int32_t input_num, kernel_size;
+	int32_t input_channel, kernel_size;
 	DNNConvPaddingParam padding_method;
+	float *kernel;
 	int32_t channel_multiplier;
 	int32_t dilation;
 } DepthwiseConvParams;

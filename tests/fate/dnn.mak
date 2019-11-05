@@ -18,6 +18,11 @@ fate-dnn-layer-maximum: $(DNNTESTSDIR)/dnn-layer-maximum-test$(EXESUF)
 fate-dnn-layer-maximum: CMD = run $(DNNTESTSDIR)/dnn-layer-maximum-test$(EXESUF)
 fate-dnn-layer-maximum: CMP = null
 
+FATE_DNN += fate-dnn-layer-depthwise
+fate-dnn-layer-depthwise: $(DNNTESTSDIR)/dnn-layer-depthwise-test$(EXESUF)
+fate-dnn-layer-depthwise: CMD = run $(DNNTESTSDIR)/dnn-layer-depthwise-test$(EXESUF)
+fate-dnn-layer-depthwise: CMP = null
+
 FATE-yes += $(FATE_DNN)
 
 fate-dnn: $(FATE_DNN)
