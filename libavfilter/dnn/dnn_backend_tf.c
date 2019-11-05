@@ -31,6 +31,7 @@
 #include "libavutil/avassert.h"
 #include "dnn_backend_native_layer_pad.h"
 #include "dnn_backend_native_layer_maximum.h"
+#include "dnn_backend_native_layer_depthwise.h"
 
 #include <tensorflow/c/c_api.h>
 
@@ -475,6 +476,17 @@ static DNNReturnType add_maximum_layer(TFModel *tf_model, TF_Operation **cur_op,
     return DNN_SUCCESS;
 }
 
+static DNNReturnType add_depthwise_layer(TFModel *tf_model, TF_Operation **cur_op,
+                                       DnnLayerReshapeParams *params, const int layer)
+{ //unfinished, subject to change
+    TF_Operation *op;
+    TF_Tensor *tensor;
+    TF_OperationDescription *op_desc;
+    TF_Output input;
+
+    return DNN_SUCCESS;
+}
+
 static DNNReturnType load_native_model(TFModel *tf_model, const char *model_filename)
 {
     int32_t layer;
@@ -549,6 +561,10 @@ static DNNReturnType load_native_model(TFModel *tf_model, const char *model_file
             layer_add_res = add_maximum_layer(tf_model, &op,
                                           (DnnLayerMaximumParams *)conv_network->layers[layer].params, layer);
             break;
+        case DLT_DEPTHWISE:
+            layer_add_res = add_depthwise_layer(tf_model, &op,
+                                          (DnnLayerDepthwiseParams *)conv_network->layers[layer].params, layer);
+            break;            
         default:
             CLEANUP_ON_ERROR(tf_model);
         }
