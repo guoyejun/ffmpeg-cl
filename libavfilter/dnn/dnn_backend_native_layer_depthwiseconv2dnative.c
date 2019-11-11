@@ -143,5 +143,3 @@ int dnn_execute_layer_depthwiseconv2dnative(DnnOperand *operands, const int32_t 
     av_freep(&temp_out);
     return 0;
 }
-
-
