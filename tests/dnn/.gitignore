@@ -1,5 +1,5 @@
 /dnn-layer-conv2d-test
 /dnn-layer-depth2space-test
-/dnn-layer-depthwise_conv2d-test
+/dnn-layer-depthwiseconv2dnative-test
 /dnn-layer-maximum-test
 /dnn-layer-pad-test

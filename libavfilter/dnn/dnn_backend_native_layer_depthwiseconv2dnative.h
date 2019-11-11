@@ -35,5 +35,5 @@ typedef struct DepthwiseConvParams{
 
 int dnn_load_layer_depthwiseconv2dnative(Layer *layer, AVIOContext *model_file_context, int file_size);
 int dnn_execute_layer_depthwiseconv2dnative(DnnOperand *operands, const int32_t *input_operand_indexes,
-                             				int32_t output_operand_index, const void *parameters);
+											int32_t output_operand_index, const void *parameters);
 #endif

@@ -1,2 +1,2 @@
-tf.*      				node_op_name     name      date
-nn.depthwise_conv2d		depthwise		 He Yitao  11.05
+tf.*      				node_op_name     		name      date
+nn.depthwise_conv2d		depthwiseconv2dnative	He Yitao  11.05

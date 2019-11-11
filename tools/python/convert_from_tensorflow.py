@@ -70,8 +70,7 @@ class TFConverter:
         self.converted_nodes = set()
         self.conv2d_scope_names = set()
         self.conv2d_scopename_inputname_dict = {}
-##        
-        self.op2code = {'Conv2D':1, 'DepthToSpace':2, 'MirrorPad':3, 'Maximum':4, 'Depthwise':5}
+        self.op2code = {'Conv2D':1, 'DepthToSpace':2, 'MirrorPad':3, 'Maximum':4}
         self.mirrorpad_mode = {'CONSTANT':0, 'REFLECT':1, 'SYMMETRIC':2}
         self.name_operand_dict = {}
 
@@ -249,21 +248,7 @@ class TFConverter:
         output_operand_index = self.add_operand(node.name, Operand.IOTYPE_OUTPUT)
         np.array([input_operand_index, output_operand_index], dtype=np.uint32).tofile(f)
 
-    def dump_depthwise_to_file(self, node, f):
-        assert(node.op == 'Depthwise')
-        self.layer_number = self.layer_number + 1
-        dnode = self.name_node_dict[node.input[1]]
-        new_numbers = dnode.attr['new_numbers'].i
-        new_height = dnode.attr['new_height'].i
-        new_weight = dnode.attr['new_weight'].i
-        new_channels = dnode.attr['new_channels'].i
-        np.array([self.op2code[node.op]], dtype=np.uint32).tofile(f)
-        np.array([new_numbers, new_height, new_weight, new_channels], dtype=np.uint32).tofile(f)
-        self.converted_nodes.add(node.name)
-        input_operand_index = self.add_operand(node.input[0], Operand.IOTYPE_INPUT)
-        output_operand_index = self.add_operand(node.name, Operand.IOTYPE_OUTPUT)
-        np.array([input_operand_index, output_operand_index], dtype=np.uint32).tofile(f)
-        
+
     def dump_layers_to_file(self, f):
         for node in self.nodes:
             if node.name in self.converted_nodes:

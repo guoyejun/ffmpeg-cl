@@ -548,7 +548,7 @@ static DNNReturnType load_native_model(TFModel *tf_model, const char *model_file
         case DLT_MAXIMUM:
             layer_add_res = add_maximum_layer(tf_model, &op,
                                           (DnnLayerMaximumParams *)conv_network->layers[layer].params, layer);
-            break;          
+            break;
         default:
             CLEANUP_ON_ERROR(tf_model);
         }

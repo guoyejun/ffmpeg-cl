@@ -113,6 +113,7 @@ static int test_with_same_multiplier(void)
     av_freep(&output);
     return 0;
 }
+
 static int test_with_same_dilate(void)
 {
     // the input data and expected data are generated with below python code.
@@ -210,54 +211,53 @@ static int test_with_same_dilate(void)
     return 0;
 }
 
-
 static int test_with_valid(void)
 {
     // the input data and expected data are generated with below python code.
     /*
     x = tf.placeholder(tf.float32, shape=[1, None, None, 3])
-	np.random.seed(0)
-	test_filter = np.random.rand(3,3,3,1).astype('float32')
-	y = tf.nn.depthwise_conv2d(x, test_filter, (1,1,1,1), "VALID")
+    np.random.seed(0)
+    test_filter = np.random.rand(3,3,3,1).astype('float32')
+    y = tf.nn.depthwise_conv2d(x, test_filter, (1,1,1,1), "VALID")
 
-	np.random.seed(0)
-	data = np.random.rand(1, 3, 3, 3)
+    np.random.seed(0)
+    data = np.random.rand(1, 3, 3, 3)
 
-	sess=tf.Session()
-	sess.run(tf.global_variables_initializer())
-	output = sess.run(y, feed_dict={x: data})
-	print("input:")
-	print(data.shape)
-	print(list(data.flatten()))
+    sess=tf.Session()
+    sess.run(tf.global_variables_initializer())
+    output = sess.run(y, feed_dict={x: data})
+    print("input:")
+    print(data.shape)
+    print(list(data.flatten()))
 
-	print("test_filter:")
-	print(test_filter.shape)
-	print(list(test_filter.flatten()))
+    print("test_filter:")
+    print(test_filter.shape)
+    print(list(test_filter.flatten()))
 
-	print("output:")
-	print(output.shape)
-	print(list(output.flatten()))
+    print("output:")
+    print(output.shape)
+    print(list(output.flatten()))
     */
     DepthwiseConvParams params;
     DnnOperand operands[2];
     int32_t input_indexes[1];
     float input[1*3*3*3] = {
-		0.5488135039273248, 0.7151893663724195, 0.6027633760716439, 0.5448831829968969, 0.4236547993389047, 
-		0.6458941130666561, 0.4375872112626925, 0.8917730007820798, 0.9636627605010293, 0.3834415188257777, 
-		0.7917250380826646, 0.5288949197529045, 0.5680445610939323, 0.925596638292661, 0.07103605819788694, 
-		0.08712929970154071, 0.02021839744032572, 0.832619845547938, 0.7781567509498505, 0.8700121482468192, 
-		0.978618342232764, 0.7991585642167236, 0.46147936225293185, 0.7805291762864555, 0.11827442586893322, 
-		0.6399210213275238, 0.1433532874090464
-	};
-	float kernel[3*3*3*1] = {
-		0.5488135, 0.71518934, 0.60276335, 0.5448832, 0.4236548, 0.6458941, 0.4375872, 0.891773, 
-		0.96366274, 0.3834415, 0.79172504, 0.5288949, 0.56804454, 0.92559665, 0.071036056, 0.0871293, 
-		0.020218397, 0.83261985, 0.77815676, 0.87001216, 0.9786183, 0.7991586, 0.46147937, 0.7805292, 
-		0.11827443, 0.639921, 0.14335328
-	};
+        0.5488135039273248, 0.7151893663724195, 0.6027633760716439, 0.5448831829968969, 0.4236547993389047, 
+        0.6458941130666561, 0.4375872112626925, 0.8917730007820798, 0.9636627605010293, 0.3834415188257777, 
+        0.7917250380826646, 0.5288949197529045, 0.5680445610939323, 0.925596638292661, 0.07103605819788694, 
+        0.08712929970154071, 0.02021839744032572, 0.832619845547938, 0.7781567509498505, 0.8700121482468192, 
+        0.978618342232764, 0.7991585642167236, 0.46147936225293185, 0.7805291762864555, 0.11827442586893322, 
+        0.6399210213275238, 0.1433532874090464
+    };
+    float kernel[3*3*3*1] = {
+        0.5488135, 0.71518934, 0.60276335, 0.5448832, 0.4236548, 0.6458941, 0.4375872, 0.891773, 
+        0.96366274, 0.3834415, 0.79172504, 0.5288949, 0.56804454, 0.92559665, 0.071036056, 0.0871293, 
+        0.020218397, 0.83261985, 0.77815676, 0.87001216, 0.9786183, 0.7991586, 0.46147937, 0.7805292, 
+        0.11827443, 0.639921, 0.14335328
+    };
 
     float expected_output[1*1*1*3] = {
-    	2.525041, 4.3495874, 4.2746506
+        2.525041, 4.3495874, 4.2746506
     };
 
     float *output;
