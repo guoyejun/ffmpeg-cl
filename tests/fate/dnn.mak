@@ -8,6 +8,11 @@ fate-dnn-layer-conv2d: $(DNNTESTSDIR)/dnn-layer-conv2d-test$(EXESUF)
 fate-dnn-layer-conv2d: CMD = run $(DNNTESTSDIR)/dnn-layer-conv2d-test$(EXESUF)
 fate-dnn-layer-conv2d: CMP = null
 
+FATE_DNN += fate-dnn-layer-depthwiseconv2dnative
+fate-dnn-layer-depthwiseconv2dnative: $(DNNTESTSDIR)/dnn-layer-depthwiseconv2dnative-test$(EXESUF)
+fate-dnn-layer-depthwiseconv2dnative: CMD = run $(DNNTESTSDIR)/dnn-layer-depthwiseconv2dnative-test$(EXESUF)
+fate-dnn-layer-depthwiseconv2dnative: CMP = null
+
 FATE_DNN += fate-dnn-layer-depth2space
 fate-dnn-layer-depth2space: $(DNNTESTSDIR)/dnn-layer-depth2space-test$(EXESUF)
 fate-dnn-layer-depth2space: CMD = run $(DNNTESTSDIR)/dnn-layer-depth2space-test$(EXESUF)
@@ -17,11 +22,6 @@ FATE_DNN += fate-dnn-layer-maximum
 fate-dnn-layer-maximum: $(DNNTESTSDIR)/dnn-layer-maximum-test$(EXESUF)
 fate-dnn-layer-maximum: CMD = run $(DNNTESTSDIR)/dnn-layer-maximum-test$(EXESUF)
 fate-dnn-layer-maximum: CMP = null
-
-FATE_DNN += fate-dnn-layer-depthwise
-fate-dnn-layer-depthwise: $(DNNTESTSDIR)/dnn-layer-depthwise-test$(EXESUF)
-fate-dnn-layer-depthwise: CMD = run $(DNNTESTSDIR)/dnn-layer-depthwise-test$(EXESUF)
-fate-dnn-layer-depthwise: CMP = null
 
 FATE-yes += $(FATE_DNN)
 

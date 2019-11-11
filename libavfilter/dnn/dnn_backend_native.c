@@ -27,7 +27,6 @@
 #include "libavutil/avassert.h"
 #include "dnn_backend_native_layer_conv2d.h"
 #include "dnn_backend_native_layers.h"
-#include "dnn_backend_native_layer_depthwise.h"
 
 static DNNReturnType get_input_native(void *model, DNNData *input, const char *input_name)
 {

@@ -18,8 +18,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-#ifndef AVFILTER_DNN_DNN_BACKEND_NATIVE_LAYER_DEPTHWISE_H
-#define AVFILTER_DNN_DNN_BACKEND_NATIVE_LAYER_DEPTHWISE_H
+#ifndef AVFILTER_DNN_DNN_BACKEND_NATIVE_LAYER_DEPTHWISECONV2DNATIVE_H
+#define AVFILTER_DNN_DNN_BACKEND_NATIVE_LAYER_DEPTHWISECONV2DNATIVE_H
 
 #include "dnn_backend_native.h"
 #include "dnn_backend_native_layer_conv2d.h"
@@ -33,7 +33,7 @@ typedef struct DepthwiseConvParams{
 } DepthwiseConvParams;
 
 
-int dnn_load_layer_depthwise(Layer *layer, AVIOContext *model_file_context, int file_size);
-int dnn_execute_layer_depthwise(DnnOperand *operands, const int32_t *input_operand_indexes,
-                             int32_t output_operand_index, const void *parameters);
+int dnn_load_layer_depthwiseconv2dnative(Layer *layer, AVIOContext *model_file_context, int file_size);
+int dnn_execute_layer_depthwiseconv2dnative(DnnOperand *operands, const int32_t *input_operand_indexes,
+                             				int32_t output_operand_index, const void *parameters);
 #endif

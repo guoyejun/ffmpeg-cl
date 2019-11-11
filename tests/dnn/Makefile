@@ -1,8 +1,8 @@
 DNNTESTPROGS += dnn-layer-pad
 DNNTESTPROGS += dnn-layer-conv2d
+DNNTESTPROGS += dnn-layer-depthwiseconv2dnative
 DNNTESTPROGS += dnn-layer-depth2space
 DNNTESTPROGS += dnn-layer-maximum
-DNNTESTPROGS += dnn-layer-depthwise
 
 DNNTESTOBJS  := $(DNNTESTOBJS:%=$(DNNTESTSDIR)%) $(DNNTESTPROGS:%=$(DNNTESTSDIR)/%-test.o)
 DNNTESTPROGS := $(DNNTESTPROGS:%=$(DNNTESTSDIR)/%-test$(EXESUF))

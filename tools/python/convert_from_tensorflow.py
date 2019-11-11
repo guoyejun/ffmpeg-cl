@@ -71,7 +71,7 @@ class TFConverter:
         self.conv2d_scope_names = set()
         self.conv2d_scopename_inputname_dict = {}
 ##        
-        self.op2code = {'Conv2D':1, 'DepthToSpace':2, 'MirrorPad':3, 'Maximum':4, 'Depthwise':6}
+        self.op2code = {'Conv2D':1, 'DepthToSpace':2, 'MirrorPad':3, 'Maximum':4, 'Depthwise':5}
         self.mirrorpad_mode = {'CONSTANT':0, 'REFLECT':1, 'SYMMETRIC':2}
         self.name_operand_dict = {}
 
