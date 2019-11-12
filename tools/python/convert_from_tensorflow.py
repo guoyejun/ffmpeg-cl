@@ -69,7 +69,7 @@ class TFConverter:
         self.conv_paddings = {'VALID':0, 'SAME':1}
         self.converted_nodes = set()
         self.conv2d_scope_names = set()
-        self.conv2d_scopename_inputname_dict = {}    
+        self.conv2d_scopename_inputname_dict = {}
         self.op2code = {'Conv2D':1, 'DepthToSpace':2, 'MirrorPad':3, 'Maximum':4, 'DepthwiseConv2dNative':5}
         self.mirrorpad_mode = {'CONSTANT':0, 'REFLECT':1, 'SYMMETRIC':2}
         self.name_operand_dict = {}
@@ -203,10 +203,12 @@ class TFConverter:
         np.array([self.op2code[node.op], dilation, self.conv_paddings[padding], self.conv_activations['None'],
                   in_channels, out_channels, filter_height, has_bias], dtype=np.uint32).tofile(f)
         kernel.tofile(f)
+
         input_operand_index = self.add_operand(input_name, Operand.IOTYPE_INPUT)
         output_operand_index = self.add_operand(node.name, Operand.IOTYPE_OUTPUT)
         np.array([input_operand_index, output_operand_index], dtype=np.uint32).tofile(f)
-        
+
+ 
     def dump_depth2space_to_file(self, node, f):
         assert(node.op == 'DepthToSpace')
         self.layer_number = self.layer_number + 1
@@ -431,6 +433,3 @@ def convert_from_tensorflow(infile, outfile, dump4tb):
     converter = TFConverter(graph_def, nodes, outfile, dump4tb)
     converter.run()
 
-infile = "single_depthwise_conv2d.pb"
-outfile = "single_depthwise_conv2d.model"
-convert_from_tensorflow(infile, outfile, True)
