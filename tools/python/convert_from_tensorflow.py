@@ -70,7 +70,7 @@ class TFConverter:
         self.converted_nodes = set()
         self.conv2d_scope_names = set()
         self.conv2d_scopename_inputname_dict = {}
-        self.op2code = {'Conv2D':1, 'DepthToSpace':2, 'MirrorPad':3, 'Maximum':4}
+        self.op2code = {'Conv2D':1, 'DepthToSpace':2, 'MirrorPad':3, 'Maximum':4, 'Reshape':5}
         self.mirrorpad_mode = {'CONSTANT':0, 'REFLECT':1, 'SYMMETRIC':2}
         self.name_operand_dict = {}
 
@@ -249,6 +249,22 @@ class TFConverter:
         np.array([input_operand_index, output_operand_index], dtype=np.uint32).tofile(f)
 
 
+    def dump_reshape_to_file(self, node, f):
+        assert(node.op == 'Reshape')
+        self.layer_number = self.layer_number + 1
+        rnode = self.name_node_dict[node.input[1]]
+        new_numbers = rnode.attr['value'].tensor.tensor_content[0]
+        new_height = rnode.attr['value'].tensor.tensor_content[4]
+        new_weight = rnode.attr['value'].tensor.tensor_content[8]
+        new_channels = rnode.attr['value'].tensor.tensor_content[12]
+        np.array([self.op2code[node.op]], dtype=np.uint32).tofile(f)
+        np.array([new_numbers, new_height, new_weight, new_channels], dtype=np.uint32).tofile(f)
+        self.converted_nodes.add(node.name)
+        input_operand_index = self.add_operand(node.input[0], Operand.IOTYPE_INPUT)
+        output_operand_index = self.add_operand(node.name, Operand.IOTYPE_OUTPUT)
+        np.array([input_operand_index, output_operand_index], dtype=np.uint32).tofile(f)
+
+
     def dump_layers_to_file(self, f):
         for node in self.nodes:
             if node.name in self.converted_nodes:
@@ -269,6 +285,8 @@ class TFConverter:
                 self.dump_mirrorpad_to_file(node, f)
             elif node.op == 'Maximum':
                 self.dump_maximum_to_file(node, f)
+            elif node.op == 'Reshape':
+                self.dump_reshape_to_file(node, f)
 
 
     def dump_operands_to_file(self, f):
