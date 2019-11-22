@@ -40,11 +40,11 @@ static int test(void)
     params.new_weight = 3;
     params.new_channels = -1;
 
-    int32_t new_dims[4];
-    new_dims[0] = 1;
-    new_dims[1] = 1;
-    new_dims[2] = 3;
-    new_dims[3] = 2;
+    int32_t expected_dims[4];
+    expected_dims[0] = 1;
+    expected_dims[1] = 1;
+    expected_dims[2] = 3;
+    expected_dims[3] = 2;
 
     operands[0].data = input;
     operands[0].dims[0] = 1;
@@ -58,7 +58,7 @@ static int test(void)
     output = operands[1].data;
 
     for (int i = 0; i < 4; i++) {
-        if (!(operands[1].dims[i] == new_dims[i])) {
+        if (!(operands[1].dims[i] == expected_dims[i])) {
             printf("new dims %d is incorrect", i);
             printf("new dims %d is %d", i, operands[1].dims[i]);
             av_freep(&output);
@@ -66,11 +66,7 @@ static int test(void)
         }
     }
 
-    int data_numbers = 1;
-
-    for (int i = 0; i < 4; i++) {
-        data_numbers = data_numbers*new_dims[i];
-    }
+    int data_numbers = sizeof(input)/sizeof(input[0]);
 
     for (int i = 0; i < data_numbers; i++) {
         if (!(input[i] == output[i])) {
