@@ -252,14 +252,16 @@ class TFConverter:
     def dump_reshape_to_file(self, node, f):
         assert(node.op == 'Reshape')
         self.layer_number = self.layer_number + 1
-        rnode = self.name_node_dict[node.input[1]]
-        new_numbers = rnode.attr['value'].tensor.tensor_content[0]
-        new_height = rnode.attr['value'].tensor.tensor_content[4]
-        new_weight = rnode.attr['value'].tensor.tensor_content[8]
-        new_channels = rnode.attr['value'].tensor.tensor_content[12]
+        shape_node = self.name_node_dict[node.input[1]]
+        new_numbers = struct.unpack('i', shape_node.attr['value'].tensor.tensor_content[0:4])[0]
+        new_height = struct.unpack('i', shape_node.attr['value'].tensor.tensor_content[4:8])[0]
+        new_weight = struct.unpack('i', shape_node.attr['value'].tensor.tensor_content[8:12])[0]
+        new_channels = struct.unpack('i', shape_node.attr['value'].tensor.tensor_content[12:16])[0]
+        #print(new_numbers, new_height, new_weight, new_channels)
         np.array([self.op2code[node.op]], dtype=np.uint32).tofile(f)
         np.array([new_numbers, new_height, new_weight, new_channels], dtype=np.uint32).tofile(f)
         self.converted_nodes.add(node.name)
+        self.converted_nodes.add(shape_node.name)
         input_operand_index = self.add_operand(node.input[0], Operand.IOTYPE_INPUT)
         output_operand_index = self.add_operand(node.name, Operand.IOTYPE_OUTPUT)
         np.array([input_operand_index, output_operand_index], dtype=np.uint32).tofile(f)
