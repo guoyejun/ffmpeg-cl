@@ -86,8 +86,7 @@ int dnn_execute_layer_reshape(DnnOperand *operands, const int32_t *input_operand
 
     src = operands[input_operand].data;
     dst = output_operand->data;
-    for (int i = 0; i < dims_count; ++i)
-        dst[i] = src[i];
+    memcpy(dst, src, dims_count*sizeof(src[0]));
 
     return 0;
 }
