@@ -56,12 +56,12 @@ int dnn_execute_layer_reshape(DnnOperand *operands, const int32_t *input_operand
     const float *src;
     float *dst;
     const DnnLayerReshapeParams *reshape_params = (const DnnLayerReshapeParams *)parameters;
-    int32_t input_operand = input_operand_indexes[0];
-    int number = operands[input_operand].dims[0];
-    int height = operands[input_operand].dims[1];
-    int width = operands[input_operand].dims[2];
-    int channel = operands[input_operand].dims[3];
-    int dims_length = calculate_operand_dims_count(&operands[input_operand]);
+    DnnOperand *input_operand = &operands[input_operand_indexes[0]];
+    int number = input_operand->dims[0];
+    int height = input_operand->dims[1];
+    int width = input_operand->dims[2];
+    int channel = input_operand->dims[3];
+    int dims_length = calculate_operand_dims_count(input_operand);
     
     DnnOperand *output_operand = &operands[output_operand_index];
     output_operand->dims[0] = reshape_params->new_numbers;
@@ -77,14 +77,14 @@ int dnn_execute_layer_reshape(DnnOperand *operands, const int32_t *input_operand
             }
         }
     }
-    output_operand->data_type = operands[input_operand].data_type;
+    output_operand->data_type = input_operand->data_type;
     output_operand->length = calculate_operand_data_length(output_operand);
     output_operand->data = av_realloc(output_operand->data, output_operand->length);
     if (!output_operand->data)
         return DNN_ERROR;
     int dims_count = calculate_operand_dims_count(output_operand);
 
-    src = operands[input_operand].data;
+    src = input_operand->data;
     dst = output_operand->data;
     memcpy(dst, src, dims_count*sizeof(src[0]));
 
