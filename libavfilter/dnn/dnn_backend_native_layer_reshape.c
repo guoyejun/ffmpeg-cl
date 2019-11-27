@@ -61,32 +61,36 @@ int dnn_execute_layer_reshape(DnnOperand *operands, const int32_t *input_operand
     int height = input_operand->dims[1];
     int width = input_operand->dims[2];
     int channel = input_operand->dims[3];
-    int dims_length = calculate_operand_dims_count(input_operand);
+    int input_dims_count = calculate_operand_dims_count(input_operand);
     
     DnnOperand *output_operand = &operands[output_operand_index];
     output_operand->dims[0] = reshape_params->new_numbers;
     output_operand->dims[1] = reshape_params->new_height;
     output_operand->dims[2] = reshape_params->new_weight;
     output_operand->dims[3] = reshape_params->new_channels;
-    int output_dims_length = calculate_operand_dims_count(output_operand);
+    int output_dims_count = calculate_operand_dims_count(output_operand);
 
-    if (output_dims_length < 0 ){
+    if (output_dims_count < 0 ){
         for (int i = 0; i < 4; ++i){
             if (output_operand->dims[i] == -1){
-                output_operand->dims[i] = dims_length/(-output_dims_length);
+                output_operand->dims[i] = input_dims_count/(-output_dims_count);
+                break;
             }
         }
     }
+    output_dims_count = calculate_operand_dims_count(output_operand);
+    if (output_dims_count != input_dims_count)
+        return DNN_ERROR;
+
     output_operand->data_type = input_operand->data_type;
     output_operand->length = calculate_operand_data_length(output_operand);
     output_operand->data = av_realloc(output_operand->data, output_operand->length);
     if (!output_operand->data)
         return DNN_ERROR;
-    int dims_count = calculate_operand_dims_count(output_operand);
 
     src = input_operand->data;
     dst = output_operand->data;
-    memcpy(dst, src, dims_count*sizeof(src[0]));
+    memcpy(dst, src, output_dims_count*sizeof(src[0]));
 
     return 0;
 }
