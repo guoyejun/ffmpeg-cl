@@ -1065,6 +1065,12 @@ int ff_qsv_enc_init(AVCodecContext *avctx, QSVEncContext *q)
     if (!q->async_fifo)
         return AVERROR(ENOMEM);
 
+    q->roi = av_mallocz(sizeof(*q->roi));
+    if (!q->roi)
+        return AVERROR(ENOMEM);
+    q->roi->Header.BufferId = MFX_EXTBUFF_ENCODER_ROI;
+    q->roi->ROIMode = MFX_ROI_MODE_QP_DELTA;
+
     if (avctx->hwaccel_context) {
         AVQSVContext *qsv = avctx->hwaccel_context;
 
@@ -1345,6 +1351,22 @@ static void print_interlace_msg(AVCodecContext *avctx, QSVEncContext *q)
     }
 }
 
+static int qsv_encode_set_roi(QSVEncContext *q, const AVFrame *frame, mfxEncodeCtrl *enc_ctrl)
+{
+    q->roi->NumROI = 1;
+    q->roi->ROI[0].Left = 128;
+    q->roi->ROI[0].Right = 256;
+    q->roi->ROI[0].Top = 64;
+    q->roi->ROI[0].Bottom = 256;
+    q->roi->ROI[0].DeltaQP = 40;
+
+    enc_ctrl->NumExtParam = 1;
+    enc_ctrl->ExtParam = (mfxExtBuffer **)&(q->roi);
+    enc_ctrl->FrameType = 0;
+
+    return 0;
+}
+
 static int encode_frame(AVCodecContext *avctx, QSVEncContext *q,
                         const AVFrame *frame)
 {
@@ -1413,6 +1435,12 @@ static int encode_frame(AVCodecContext *avctx, QSVEncContext *q,
 
     if (q->set_encode_ctrl_cb) {
         q->set_encode_ctrl_cb(avctx, frame, &qsv_frame->enc_ctrl);
+    }
+
+    if (frame) {
+        ret = qsv_encode_set_roi(q, frame, &qsv_frame->enc_ctrl);
+        if (ret < 0)
+            return ret;
     }
 
     sync = av_mallocz(sizeof(*sync));
@@ -1607,6 +1635,7 @@ int ff_qsv_enc_close(AVCodecContext *avctx, QSVEncContext *q)
     av_buffer_unref(&q->opaque_alloc_buf);
 
     av_freep(&q->extparam);
+    av_freep(&q->roi);
 
     return 0;
 }

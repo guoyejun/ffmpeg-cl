@@ -39,6 +39,7 @@
 #define QSV_HAVE_CO_VPS  QSV_VERSION_ATLEAST(1, 17)
 
 #define QSV_HAVE_EXT_VP9_PARAM QSV_VERSION_ATLEAST(1, 26)
+#define QSV_HAVE_DELTA_QP QSV_VERSION_ATLEAST(1, 22)
 
 #define QSV_HAVE_TRELLIS QSV_VERSION_ATLEAST(1, 8)
 #define QSV_HAVE_MAX_SLICE_SIZE QSV_VERSION_ATLEAST(1, 9)
@@ -126,6 +127,9 @@ typedef struct QSVEncContext {
 #endif
 #if QSV_HAVE_EXT_VP9_PARAM
     mfxExtVP9Param  extvp9param;
+#endif
+#if QSV_HAVE_DELTA_QP
+    mfxExtEncoderROI *roi;
 #endif
 
     mfxExtOpaqueSurfaceAlloc opaque_alloc;
