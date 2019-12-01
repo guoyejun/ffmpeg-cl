@@ -25,6 +25,7 @@
 #include "dnn_backend_native_layer_depth2space.h"
 #include "dnn_backend_native_layer_maximum.h"
 #include "dnn_backend_native_layer_reshape.h"
+#include "dnn_backend_native_layer_add.h"
 
 LayerFunc layer_funcs[DLT_COUNT] = {
     {NULL, NULL},
@@ -33,4 +34,5 @@ LayerFunc layer_funcs[DLT_COUNT] = {
     {dnn_execute_layer_pad,         dnn_load_layer_pad},
     {dnn_execute_layer_maximum,     dnn_load_layer_maximum},
     {dnn_execute_layer_reshape,     dnn_load_layer_reshape},
+    {dnn_execute_layer_add,         dnn_load_layer_add},
 };
