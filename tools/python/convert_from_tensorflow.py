@@ -70,7 +70,7 @@ class TFConverter:
         self.converted_nodes = set()
         self.conv2d_scope_names = set()
         self.conv2d_scopename_inputname_dict = {}
-        self.op2code = {'Conv2D':1, 'DepthToSpace':2, 'MirrorPad':3, 'Maximum':4, 'Reshape':5}
+        self.op2code = {'Conv2D':1, 'DepthToSpace':2, 'MirrorPad':3, 'Maximum':4, 'Reshape':5, 'Shape':9}
         self.mirrorpad_mode = {'CONSTANT':0, 'REFLECT':1, 'SYMMETRIC':2}
         self.name_operand_dict = {}
 
@@ -266,6 +266,16 @@ class TFConverter:
         output_operand_index = self.add_operand(node.name, Operand.IOTYPE_OUTPUT)
         np.array([input_operand_index, output_operand_index], dtype=np.uint32).tofile(f)
 
+    def dump_shape_to_file(self, node, f):
+        assert(node.op == 'Shape')
+        self.layer_number = self.layer_number + 1
+        np.array([self.op2code[node.op]], dtype=np.uint32).tofile(f)
+        print("dumping node.op:",self.op2code[node.op])
+        self.converted_nodes.add(node.name)
+        input_operand_index = self.add_operand(node.input[0], Operand.IOTYPE_INPUT)
+        output_operand_index = self.add_operand(node.name, Operand.IOTYPE_OUTPUT)
+        np.array([input_operand_index, output_operand_index], dtype=np.uint32).tofile(f)
+        print("index:",[input_operand_index, output_operand_index])
 
     def dump_layers_to_file(self, f):
         for node in self.nodes:
@@ -289,7 +299,8 @@ class TFConverter:
                 self.dump_maximum_to_file(node, f)
             elif node.op == 'Reshape':
                 self.dump_reshape_to_file(node, f)
-
+            elif node.op == 'Shape':
+                self.dump_shape_to_file(node, f)
 
     def dump_operands_to_file(self, f):
             operands = sorted(self.name_operand_dict.values())
