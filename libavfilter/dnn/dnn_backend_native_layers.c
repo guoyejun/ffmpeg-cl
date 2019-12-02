@@ -33,4 +33,5 @@ LayerFunc layer_funcs[DLT_COUNT] = {
     {dnn_execute_layer_pad,         dnn_load_layer_pad},
     {dnn_execute_layer_maximum,     dnn_load_layer_maximum},
     {dnn_execute_layer_reshape,     dnn_load_layer_reshape},
+    {dnn_execute_layer_minimum,     dnn_load_layer_minimum},
 };
