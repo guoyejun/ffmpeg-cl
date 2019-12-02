@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Guo Yejun
+ * Copyright (c) 2019 He Yitao
  *
  * This file is part of FFmpeg.
  *
@@ -18,21 +18,21 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-#include <string.h>
-#include "dnn_backend_native_layers.h"
-#include "dnn_backend_native_layer_pad.h"
-#include "dnn_backend_native_layer_conv2d.h"
-#include "dnn_backend_native_layer_depthwiseconv2d.h"
-#include "dnn_backend_native_layer_depth2space.h"
-#include "dnn_backend_native_layer_maximum.h"
-#include "dnn_backend_native_layer_reshape.h"
+#ifndef AVFILTER_DNN_DNN_BACKEND_NATIVE_LAYER_DEPTHWISECONV2D_H
+#define AVFILTER_DNN_DNN_BACKEND_NATIVE_LAYER_DEPTHWISECONV2D_H
 
-LayerFunc layer_funcs[DLT_COUNT] = {
-    {NULL, NULL},
-    {dnn_execute_layer_conv2d,           dnn_load_layer_conv2d},
-    {dnn_execute_layer_depth2space,      dnn_load_layer_depth2space},
-    {dnn_execute_layer_pad,              dnn_load_layer_pad},
-    {dnn_execute_layer_maximum,          dnn_load_layer_maximum},
-    {dnn_execute_layer_reshape,          dnn_load_layer_reshape},
-    {dnn_execute_layer_depthwiseconv2d,  dnn_load_layer_depthwiseconv2d},
-};
+#include "dnn_backend_native.h"
+#include "dnn_backend_native_layer_conv2d.h"
+
+typedef struct DepthwiseConvParams{
+    int32_t input_channel, kernel_size;
+    DNNConvPaddingParam padding_method;
+    float *kernel;
+    int32_t channel_multiplier;
+    int32_t dilation;
+} DepthwiseConvParams;
+
+int dnn_load_layer_depthwiseconv2d(Layer *layer, AVIOContext *model_file_context, int file_size);
+int dnn_execute_layer_depthwiseconv2d(DnnOperand *operands, const int32_t *input_operand_indexes,
+                                      int32_t output_operand_index, const void *parameters);
+#endif

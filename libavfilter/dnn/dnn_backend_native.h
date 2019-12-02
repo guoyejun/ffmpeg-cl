@@ -42,6 +42,7 @@ typedef enum {
     DLT_MIRROR_PAD = 3,
     DLT_MAXIMUM = 4,
     DLT_RESHAPE = 5,
+    DLT_DEPTHWISECONV2DNATIVE = 6,
     DLT_COUNT
 } DNNLayerType;
 
