@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Guo Yejun
+ *  * Copyright (c) 2019 Xingye Tang
  *
  * This file is part of FFmpeg.
  *
@@ -18,20 +18,24 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-#include <string.h>
-#include "dnn_backend_native_layers.h"
-#include "dnn_backend_native_layer_pad.h"
-#include "dnn_backend_native_layer_conv2d.h"
-#include "dnn_backend_native_layer_depth2space.h"
-#include "dnn_backend_native_layer_maximum.h"
-#include "dnn_backend_native_layer_reshape.h"
+/**
+ * @file
+ * DNN native backend implementation.
+ */
+#ifndef AVFILTER_DNN_DNN_BACKEND_NATIVE_LAYER_MINIMUM_H
+#define AVFILTER_DNN_DNN_BACKEND_NATIVE_LAYER_MINIMUM_H
 
-LayerFunc layer_funcs[DLT_COUNT] = {
-    {NULL, NULL},
-    {dnn_execute_layer_conv2d,      dnn_load_layer_conv2d},
-    {dnn_execute_layer_depth2space, dnn_load_layer_depth2space},
-    {dnn_execute_layer_pad,         dnn_load_layer_pad},
-    {dnn_execute_layer_maximum,     dnn_load_layer_maximum},
-    {dnn_execute_layer_reshape,     dnn_load_layer_reshape},
-    {dnn_execute_layer_minimum,     dnn_load_layer_minimum},
-};
+#include "libavformat/avio.h"
+#include "dnn_backend_native.h"
+
+typedef struct DnnLayerMinimumParams{
+    union {
+        uint32_t u32;
+        float y;
+    }val;
+} DnnLayerMinimumParams;
+
+int dnn_load_layer_minimum(Layer *layer, AVIOContext *model_file_context, int file_size);
+int dnn_execute_layer_minimum(DnnOperand *operands, const int32_t *input_operand_indexes,
+                              int32_t output_operand_index, const void *parameters);
+#endif
