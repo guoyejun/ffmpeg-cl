@@ -23,6 +23,11 @@ fate-dnn-layer-reshape: $(DNNTESTSDIR)/dnn-layer-reshape-test$(EXESUF)
 fate-dnn-layer-reshape: CMD = run $(DNNTESTSDIR)/dnn-layer-reshape-test$(EXESUF)
 fate-dnn-layer-reshape: CMP = null
 
+FATE_DNN += fate-dnn-layer-shape
+fate-dnn-layer-shape: $(DNNTESTSDIR)/dnn-layer-shape-test$(EXESUF)
+fate-dnn-layer-shape: CMD = run $(DNNTESTSDIR)/dnn-layer-shape-test$(EXESUF)
+fate-dnn-layer-shape: CMP = null
+
 FATE-yes += $(FATE_DNN)
 
 fate-dnn: $(FATE_DNN)
