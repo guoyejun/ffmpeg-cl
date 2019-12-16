@@ -9067,8 +9067,6 @@ Set the input name of the dnn network.
 Set the output name of the dnn network.
 
 @item fmt
-Set the pixel format for the Frame, the value is determined by the input of the dnn network model.
-
 If the model handles RGB (or BGR) image and the data type of model input is uint8, fmt must be @code{AV_PIX_FMT_RGB24} (or @code{AV_PIX_FMT_BGR24}.
 If the model handles RGB (or BGR) image and the data type of model input is float, fmt must be @code{AV_PIX_FMT_RGB24} (or @code{AV_PIX_FMT_BGR24}, and this filter will do data type conversion internally.
 If the model handles GRAY image and the data type of model input is uint8, fmt must be @code{AV_PIX_FMT_GRAY8}.
