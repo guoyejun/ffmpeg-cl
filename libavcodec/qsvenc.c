@@ -790,6 +790,20 @@ FF_ENABLE_DEPRECATION_WARNINGS
     }
 #endif
 
+    q->extroi.Header.BufferId = MFX_EXTBUFF_ENCODER_ROI;
+    q->extroi.Header.BufferSz = sizeof(q->extroi);
+    q->extroi.ROIMode = MFX_ROI_MODE_QP_DELTA;
+    // 256 to query the max supported roi number
+    q->extroi.NumROI = 256;
+    // due to the bug in msdk, we must set non_empty rect for query
+    for (int i = 0; i < sizeof(q->extroi.ROI)/sizeof(q->extroi.ROI[0]); ++i) {
+        q->extroi.ROI[i].Left = 0;
+        q->extroi.ROI[i].Top  = 0;
+        q->extroi.ROI[i].Right  = 16;
+        q->extroi.ROI[i].Bottom = 16;
+    }
+    q->extparam_internal[q->nb_extparam_internal++] = (mfxExtBuffer *)&q->extroi;
+
     if (!check_enc_param(avctx,q)) {
         av_log(avctx, AV_LOG_ERROR,
                "some encoding parameters are not supported by the QSV "
