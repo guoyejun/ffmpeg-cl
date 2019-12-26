@@ -795,7 +795,7 @@ FF_ENABLE_DEPRECATION_WARNINGS
 #if QSV_HAVE_ROI_ENCODING
     // mfe and roi could not be enabled together, they even could not be queried together,
     // otherwise, gpu hang.
-    if (!mfe_enabled) {
+    if (1) {
         q->extroi.Header.BufferId = MFX_EXTBUFF_ENCODER_ROI;
         q->extroi.Header.BufferSz = sizeof(q->extroi);
         q->extroi.ROIMode = MFX_ROI_MODE_QP_DELTA;
