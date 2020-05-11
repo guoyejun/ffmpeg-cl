@@ -26,14 +26,35 @@
 #include "dnn_backend_openvino.h"
 #include "libavformat/avio.h"
 #include "libavutil/avassert.h"
-
 #include <openvino/c_api/ie_c_api.h>
+
+typedef struct OVModel{
+    ie_core_t *core;
+} OVModel;
 
 DNNModel *ff_dnn_load_model_ov(const char *model_filename)
 {
     DNNModel *model = NULL;
-    ie_core_t *core = NULL;
-    ie_core_create("", &core);
+    OVModel *ov_model = NULL;
+    IEStatusCode status;
+
+    model = av_malloc(sizeof(DNNModel));
+    if (!model){
+        return NULL;
+    }
+
+    ov_model = av_mallocz(sizeof(OVModel));
+    if (!ov_model){
+        av_freep(&model);
+        return NULL;
+    }
+
+    status = ie_core_create("", &ov_model->core);
+    if (status != OK) {
+        av_freep(&model);
+        av_freep(&ov_model);
+        return NULL;
+    }
 
     return model;
 }
