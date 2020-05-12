@@ -30,13 +30,27 @@
 
 typedef struct OVModel{
     ie_core_t *core;
+    ie_network_t *network;
+    ie_executable_network_t *exe_network;
 } OVModel;
+
+static DNNReturnType set_input_output_ov(void *model, DNNData *input, const char *input_name, const char **output_names, uint32_t nb_output)
+{
+
+    return DNN_SUCCESS;
+}
+
+static DNNReturnType get_input_ov(void *model, DNNData *input, const char *input_name)
+{
+    return DNN_SUCCESS;
+}
 
 DNNModel *ff_dnn_load_model_ov(const char *model_filename)
 {
     DNNModel *model = NULL;
     OVModel *ov_model = NULL;
     IEStatusCode status;
+    ie_config_t config = {NULL, NULL, NULL};
 
     model = av_malloc(sizeof(DNNModel));
     if (!model){
@@ -44,19 +58,36 @@ DNNModel *ff_dnn_load_model_ov(const char *model_filename)
     }
 
     ov_model = av_mallocz(sizeof(OVModel));
-    if (!ov_model){
-        av_freep(&model);
-        return NULL;
-    }
+    if (!ov_model)
+        goto err;
 
     status = ie_core_create("", &ov_model->core);
-    if (status != OK) {
-        av_freep(&model);
-        av_freep(&ov_model);
-        return NULL;
-    }
+    if (status != OK)
+        goto err;
+
+    status = ie_core_read_network(ov_model->core, model_filename, NULL, &ov_model->network);
+    if (status != OK)
+        goto err;
+
+    status = ie_core_load_network(ov_model->core, ov_model->network, "CPU", &config, &ov_model->exe_network);
+    if (status != OK)
+        goto err;
+
+    model->model = (void *)ov_model;
+    model->set_input_output = &set_input_output_ov;
+    model->get_input = &get_input_ov;
 
     return model;
+
+err:
+    if (model)
+        av_freep(&model);
+    if (ov_model) {
+        if (ov_model->core)
+            ie_core_free(&ov_model->core);
+        av_freep(&ov_model);
+    }
+    return NULL;
 }
 
 DNNReturnType ff_dnn_execute_model_ov(const DNNModel *model, DNNData *outputs, uint32_t nb_output)
