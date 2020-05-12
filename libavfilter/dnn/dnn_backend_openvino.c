@@ -34,14 +34,58 @@ typedef struct OVModel{
     ie_executable_network_t *exe_network;
 } OVModel;
 
-static DNNReturnType set_input_output_ov(void *model, DNNData *input, const char *input_name, const char **output_names, uint32_t nb_output)
+static DNNDataType Precision2Datatype(precision_e precision)
 {
-
-    return DNN_SUCCESS;
+    switch (precision)
+    {
+    case FP32:
+        return DNN_FLOAT;
+    default:
+        av_assert0(!"not supported yet.");
+        return DNN_FLOAT;
+    }
 }
 
 static DNNReturnType get_input_ov(void *model, DNNData *input, const char *input_name)
 {
+    OVModel *ov_model = (OVModel *)model;
+    char *model_input_name = NULL;
+    IEStatusCode status;
+    size_t model_input_count = 0;
+    dimensions_t dims;
+    precision_e precision;
+
+    status = ie_network_get_inputs_number(ov_model->network, &model_input_count);
+    if (status != OK)
+        return DNN_ERROR;
+
+    for (size_t i = 0; i < model_input_count; ++i) {
+        status = ie_network_get_input_name(ov_model->network, i, &model_input_name);
+        if (status != OK)
+            return DNN_ERROR;
+        if (strcmp(model_input_name, input_name) == 0) {
+            status |= ie_network_get_input_dims(ov_model->network, model_input_name, &dims);
+            status |= ie_network_get_input_precision(ov_model->network, model_input_name, &precision);
+            ie_network_name_free(&model_input_name);
+            if (status != OK)
+                return DNN_ERROR;
+
+            input->channels = dims.dims[1];
+            input->height   = dims.dims[2];
+            input->width    = dims.dims[3];
+            input->dt       = Precision2Datatype(precision);
+            return DNN_SUCCESS;
+        }
+
+        ie_network_name_free(&model_input_name);
+    }
+
+    return DNN_ERROR;
+}
+
+static DNNReturnType set_input_output_ov(void *model, DNNData *input, const char *input_name, const char **output_names, uint32_t nb_output)
+{
+
     return DNN_SUCCESS;
 }
 
@@ -83,6 +127,10 @@ err:
     if (model)
         av_freep(&model);
     if (ov_model) {
+        if (ov_model->exe_network)
+            ie_exec_network_free(&ov_model->exe_network);
+        if (ov_model->network)
+            ie_network_free(&ov_model->network);
         if (ov_model->core)
             ie_core_free(&ov_model->core);
         av_freep(&ov_model);
@@ -97,5 +145,17 @@ DNNReturnType ff_dnn_execute_model_ov(const DNNModel *model, DNNData *outputs, u
 
 void ff_dnn_free_model_ov(DNNModel **model)
 {
+    OVModel *ov_model;
 
+    if (*model){
+        ov_model = (OVModel *)(*model)->model;
+        if (ov_model->exe_network)
+            ie_exec_network_free(&ov_model->exe_network);
+        if (ov_model->network)
+            ie_network_free(&ov_model->network);
+        if (ov_model->core)
+            ie_core_free(&ov_model->core);
+        av_freep(&ov_model);
+        av_freep(model);
+    }
 }
