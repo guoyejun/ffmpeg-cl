@@ -34,7 +34,7 @@ typedef struct OVModel{
     ie_executable_network_t *exe_network;
 } OVModel;
 
-static DNNDataType Precision2Datatype(precision_e precision)
+static DNNDataType precision_to_datatype(precision_e precision)
 {
     switch (precision)
     {
@@ -73,7 +73,7 @@ static DNNReturnType get_input_ov(void *model, DNNData *input, const char *input
             input->channels = dims.dims[1];
             input->height   = dims.dims[2];
             input->width    = dims.dims[3];
-            input->dt       = Precision2Datatype(precision);
+            input->dt       = precision_to_datatype(precision);
             return DNN_SUCCESS;
         }
 
