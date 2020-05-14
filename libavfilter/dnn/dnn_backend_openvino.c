@@ -206,15 +206,27 @@ err:
 
 DNNReturnType ff_dnn_execute_model_ov(const DNNModel *model, DNNData *outputs, uint32_t nb_output)
 {
+    ie_blob_buffer_t blob_buffer;
+    OVModel *ov_model = (OVModel *)model->model;
+    uint32_t nb = FFMIN(nb_output, ov_model->nb_output);
+    IEStatusCode status = ie_infer_request_infer(ov_model->infer_request);
+    if (status != OK)
+        return DNN_ERROR;
+
+    for (uint32_t i = 0; i < nb; ++i) {
+        status = ie_blob_get_buffer(ov_model->input_blob, &blob_buffer);
+        if (status != OK)
+            return DNN_ERROR;
+        outputs[i].data = (float *)blob_buffer.buffer;
+    }
+
     return DNN_SUCCESS;
 }
 
 void ff_dnn_free_model_ov(DNNModel **model)
 {
-    OVModel *ov_model;
-
     if (*model){
-        ov_model = (OVModel *)(*model)->model;
+        OVModel *ov_model = (OVModel *)(*model)->model;
         if (ov_model->output_blobs) {
             for (uint32_t i = 0; i < ov_model->nb_output; ++ov_model) {
                 ie_blob_free(&ov_model->output_blobs[i]);
