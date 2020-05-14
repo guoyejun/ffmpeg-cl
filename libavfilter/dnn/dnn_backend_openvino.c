@@ -32,6 +32,10 @@ typedef struct OVModel{
     ie_core_t *core;
     ie_network_t *network;
     ie_executable_network_t *exe_network;
+    ie_infer_request_t *infer_request;
+    ie_blob_t *input_blob;
+    ie_blob_t **output_blobs;
+    uint32_t nb_output;
 } OVModel;
 
 static DNNDataType precision_to_datatype(precision_e precision)
@@ -64,9 +68,15 @@ static DNNReturnType get_input_ov(void *model, DNNData *input, const char *input
         if (status != OK)
             return DNN_ERROR;
         if (strcmp(model_input_name, input_name) == 0) {
-            status |= ie_network_get_input_dims(ov_model->network, model_input_name, &dims);
-            status |= ie_network_get_input_precision(ov_model->network, model_input_name, &precision);
             ie_network_name_free(&model_input_name);
+            status |= ie_network_get_input_dims(ov_model->network, input_name, &dims);
+            status |= ie_network_get_input_precision(ov_model->network, input_name, &precision);
+            if (status != OK)
+                return DNN_ERROR;
+
+            // The order of dims in the openvino is fixed and it is always NCHW for 4-D data.
+            // while we pass NHWC data from FFmpeg to openvino
+            status = ie_network_set_input_layout(ov_model->network, input_name, NHWC);
             if (status != OK)
                 return DNN_ERROR;
 
@@ -85,8 +95,64 @@ static DNNReturnType get_input_ov(void *model, DNNData *input, const char *input
 
 static DNNReturnType set_input_output_ov(void *model, DNNData *input, const char *input_name, const char **output_names, uint32_t nb_output)
 {
+    OVModel *ov_model = (OVModel *)model;
+    IEStatusCode status;
+    dimensions_t dims;
+    precision_e precision;
+    ie_blob_buffer_t blob_buffer;
+
+    status = ie_exec_network_create_infer_request(ov_model->exe_network, &ov_model->infer_request);
+    if (status != OK)
+        goto err;
+
+    status = ie_infer_request_get_blob(ov_model->infer_request, input_name, &ov_model->input_blob);
+    if (status != OK)
+        goto err;
+
+    status |= ie_blob_get_dims(ov_model->input_blob, &dims);
+    status |= ie_blob_get_precision(ov_model->input_blob, &precision);
+    if (status != OK)
+        goto err;
+
+    av_assert0(input->channels == dims.dims[1]);
+    av_assert0(input->height   == dims.dims[2]);
+    av_assert0(input->width    == dims.dims[3]);
+    av_assert0(input->dt       == precision_to_datatype(precision));
+
+    status = ie_blob_get_buffer(ov_model->input_blob, &blob_buffer);
+    if (status != OK)
+        goto err;
+    input->data = (float *)blob_buffer.buffer;
+
+    // outputs
+    ov_model->nb_output = 0;
+    av_freep(&ov_model->output_blobs);
+    ov_model->output_blobs = av_mallocz_array(nb_output, sizeof(*ov_model->output_blobs));
+    if (!ov_model->output_blobs)
+        goto err;
+
+    for (int i = 0; i < nb_output; ++i) {
+        const char *output_name = output_names[i];
+        status = ie_infer_request_get_blob(ov_model->infer_request, output_name, &(ov_model->output_blobs[i]));
+        if (status != OK)
+            goto err;
+        ov_model->nb_output++;
+    }
 
     return DNN_SUCCESS;
+
+err:
+    if (ov_model->output_blobs) {
+        for (uint32_t i = 0; i < ov_model->nb_output; ++ov_model) {
+            ie_blob_free(&(ov_model->output_blobs[i]));
+        }
+        av_freep(&ov_model->output_blobs);
+    }
+    if (ov_model->input_blob)
+        ie_blob_free(&ov_model->input_blob);
+    if (ov_model->infer_request)
+        ie_infer_request_free(&ov_model->infer_request);
+    return DNN_ERROR;
 }
 
 DNNModel *ff_dnn_load_model_ov(const char *model_filename)
@@ -149,6 +215,16 @@ void ff_dnn_free_model_ov(DNNModel **model)
 
     if (*model){
         ov_model = (OVModel *)(*model)->model;
+        if (ov_model->output_blobs) {
+            for (uint32_t i = 0; i < ov_model->nb_output; ++ov_model) {
+                ie_blob_free(&ov_model->output_blobs[i]);
+            }
+            av_freep(&ov_model->output_blobs);
+        }
+        if (ov_model->input_blob)
+            ie_blob_free(&ov_model->input_blob);
+        if (ov_model->infer_request)
+            ie_infer_request_free(&ov_model->infer_request);
         if (ov_model->exe_network)
             ie_exec_network_free(&ov_model->exe_network);
         if (ov_model->network)
