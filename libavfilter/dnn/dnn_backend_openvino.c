@@ -63,7 +63,7 @@ static DNNReturnType get_input_ov(void *model, DNNData *input, const char *input
     if (status != OK)
         return DNN_ERROR;
 
-    for (size_t i = 0; i < model_input_count; ++i) {
+    for (size_t i = 0; i < model_input_count; i++) {
         status = ie_network_get_input_name(ov_model->network, i, &model_input_name);
         if (status != OK)
             return DNN_ERROR;
@@ -122,7 +122,7 @@ static DNNReturnType set_input_output_ov(void *model, DNNData *input, const char
     status = ie_blob_get_buffer(ov_model->input_blob, &blob_buffer);
     if (status != OK)
         goto err;
-    input->data = (float *)blob_buffer.buffer;
+    input->data = blob_buffer.buffer;
 
     // outputs
     ov_model->nb_output = 0;
@@ -131,7 +131,7 @@ static DNNReturnType set_input_output_ov(void *model, DNNData *input, const char
     if (!ov_model->output_blobs)
         goto err;
 
-    for (int i = 0; i < nb_output; ++i) {
+    for (int i = 0; i < nb_output; i++) {
         const char *output_name = output_names[i];
         status = ie_infer_request_get_blob(ov_model->infer_request, output_name, &(ov_model->output_blobs[i]));
         if (status != OK)
@@ -143,7 +143,7 @@ static DNNReturnType set_input_output_ov(void *model, DNNData *input, const char
 
 err:
     if (ov_model->output_blobs) {
-        for (uint32_t i = 0; i < ov_model->nb_output; ++ov_model) {
+        for (uint32_t i = 0; i < ov_model->nb_output; i++) {
             ie_blob_free(&(ov_model->output_blobs[i]));
         }
         av_freep(&ov_model->output_blobs);
@@ -206,6 +206,8 @@ err:
 
 DNNReturnType ff_dnn_execute_model_ov(const DNNModel *model, DNNData *outputs, uint32_t nb_output)
 {
+    dimensions_t dims;
+    precision_e precision;
     ie_blob_buffer_t blob_buffer;
     OVModel *ov_model = (OVModel *)model->model;
     uint32_t nb = FFMIN(nb_output, ov_model->nb_output);
@@ -214,10 +216,20 @@ DNNReturnType ff_dnn_execute_model_ov(const DNNModel *model, DNNData *outputs, u
         return DNN_ERROR;
 
     for (uint32_t i = 0; i < nb; ++i) {
-        status = ie_blob_get_buffer(ov_model->input_blob, &blob_buffer);
+        status = ie_blob_get_buffer(ov_model->output_blobs[i], &blob_buffer);
         if (status != OK)
             return DNN_ERROR;
-        outputs[i].data = (float *)blob_buffer.buffer;
+
+        status |= ie_blob_get_dims(ov_model->output_blobs[i], &dims);
+        status |= ie_blob_get_precision(ov_model->output_blobs[i], &precision);
+        if (status != OK)
+            return DNN_ERROR;
+
+        outputs[i].channels = dims.dims[1];
+        outputs[i].height   = dims.dims[2];
+        outputs[i].width    = dims.dims[3];
+        outputs[i].dt       = precision_to_datatype(precision);
+        outputs[i].data     = blob_buffer.buffer;
     }
 
     return DNN_SUCCESS;
@@ -228,8 +240,8 @@ void ff_dnn_free_model_ov(DNNModel **model)
     if (*model){
         OVModel *ov_model = (OVModel *)(*model)->model;
         if (ov_model->output_blobs) {
-            for (uint32_t i = 0; i < ov_model->nb_output; ++ov_model) {
-                ie_blob_free(&ov_model->output_blobs[i]);
+            for (uint32_t i = 0; i < ov_model->nb_output; i++) {
+                ie_blob_free(&(ov_model->output_blobs[i]));
             }
             av_freep(&ov_model->output_blobs);
         }
