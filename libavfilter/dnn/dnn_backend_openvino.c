@@ -26,7 +26,7 @@
 #include "dnn_backend_openvino.h"
 #include "libavformat/avio.h"
 #include "libavutil/avassert.h"
-#include <openvino/c_api/ie_c_api.h>
+#include <c_api/ie_c_api.h>
 
 typedef struct OVModel{
     ie_core_t *core;
