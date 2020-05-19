@@ -101,7 +101,6 @@ static DNNReturnType set_input_output_ov(void *model, DNNData *input, const char
     dimensions_t dims;
     precision_e precision;
     ie_blob_buffer_t blob_buffer;
-    char *model_output_name;
 
     status = ie_exec_network_create_infer_request(ov_model->exe_network, &ov_model->infer_request);
     if (status != OK)
@@ -133,9 +132,6 @@ static DNNReturnType set_input_output_ov(void *model, DNNData *input, const char
     ov_model->output_blobs = av_mallocz_array(nb_output, sizeof(*ov_model->output_blobs));
     if (!ov_model->output_blobs)
         goto err;
-
-    status = ie_network_get_output_name(ov_model->network, 0, &model_output_name);
-    printf("%s\n", model_output_name);
 
     for (int i = 0; i < nb_output; i++) {
         const char *output_name = output_names[i];
