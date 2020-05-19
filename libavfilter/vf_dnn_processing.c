@@ -342,9 +342,16 @@ static int copy_from_frame_to_dnn(DnnProcessingContext *ctx, const AVFrame *fram
         return 0;
     case AV_PIX_FMT_GRAY8:
     case AV_PIX_FMT_GRAYF32:
-        av_image_copy_plane(dnn_input->data, bytewidth,
-                            frame->data[0], frame->linesize[0],
-                            bytewidth, frame->height);
+//	        av_image_copy_plane(dnn_input->data, bytewidth,
+//	                            frame->data[0], frame->linesize[0],
+//	                            bytewidth, frame->height);
+        for (int row = 0; row < frame->height; ++row) {
+            float *src = (float*)(frame->data[0] + frame->linesize[0] * row);
+            float *dst = (float*)(dnn_input->data + bytewidth * row);
+            for (int col = 0; col < frame->width; ++col) {
+                dst[col] = src[col] * 255.0f;
+            }
+        }
         return 0;
     case AV_PIX_FMT_YUV420P:
     case AV_PIX_FMT_YUV422P:

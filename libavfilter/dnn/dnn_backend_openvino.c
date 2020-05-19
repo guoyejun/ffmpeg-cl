@@ -34,6 +34,7 @@ typedef struct OVModel{
     ie_executable_network_t *exe_network;
     ie_infer_request_t *infer_request;
     ie_blob_t *input_blob;
+    float *input_data;  //for debug only
     ie_blob_t **output_blobs;
     uint32_t nb_output;
 } OVModel;
@@ -100,6 +101,7 @@ static DNNReturnType set_input_output_ov(void *model, DNNData *input, const char
     dimensions_t dims;
     precision_e precision;
     ie_blob_buffer_t blob_buffer;
+    char *model_output_name;
 
     status = ie_exec_network_create_infer_request(ov_model->exe_network, &ov_model->infer_request);
     if (status != OK)
@@ -123,6 +125,7 @@ static DNNReturnType set_input_output_ov(void *model, DNNData *input, const char
     if (status != OK)
         goto err;
     input->data = blob_buffer.buffer;
+    ov_model->input_data = blob_buffer.buffer;
 
     // outputs
     ov_model->nb_output = 0;
@@ -130,6 +133,9 @@ static DNNReturnType set_input_output_ov(void *model, DNNData *input, const char
     ov_model->output_blobs = av_mallocz_array(nb_output, sizeof(*ov_model->output_blobs));
     if (!ov_model->output_blobs)
         goto err;
+
+    status = ie_network_get_output_name(ov_model->network, 0, &model_output_name);
+    printf("%s\n", model_output_name);
 
     for (int i = 0; i < nb_output; i++) {
         const char *output_name = output_names[i];
@@ -216,6 +222,10 @@ DNNReturnType ff_dnn_execute_model_ov(const DNNModel *model, DNNData *outputs, u
         return DNN_ERROR;
 
     for (uint32_t i = 0; i < nb; ++i) {
+        //status = ie_infer_request_get_blob(ov_model->infer_request, "129", &(ov_model->output_blobs[i]));
+        if (status != OK)
+            return DNN_ERROR;
+        
         status = ie_blob_get_buffer(ov_model->output_blobs[i], &blob_buffer);
         if (status != OK)
             return DNN_ERROR;
