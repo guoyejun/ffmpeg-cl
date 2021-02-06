@@ -68,6 +68,7 @@ typedef struct TaskItem {
     int do_ioproc;
     int async;
     int done;
+    int inference_analyze_flag;
 } TaskItem;
 
 typedef struct RequestItem {
@@ -117,6 +118,28 @@ static int get_datatype_size(DNNDataType dt)
     }
 }
 
+static enum AVPixelFormat ov_colorformat_to_av_pixel_format(colorformat_e color_format)
+{
+    if (!color_format) {
+        switch (color_format) {
+            case RGB:
+            case RGBX:
+                return AV_PIX_FMT_RGB24;
+            case BGR:
+            case BGRX:
+                return AV_PIX_FMT_BGR24;
+            case NV12:
+                return AV_PIX_FMT_NV12;
+            case I420:
+                return AV_PIX_FMT_YUV420P;
+            default:
+                return AV_PIX_FMT_NONE;
+        }
+    } else {
+        return AV_PIX_FMT_NONE;
+    }
+}
+
 static DNNReturnType fill_model_input_ov(OVModel *ov_model, RequestItem *request)
 {
     dimensions_t dims;
@@ -160,7 +183,8 @@ static DNNReturnType fill_model_input_ov(OVModel *ov_model, RequestItem *request
             if (ov_model->model->pre_proc != NULL) {
                 ov_model->model->pre_proc(task->in_frame, &input, ov_model->model->filter_ctx);
             } else {
-                ff_proc_from_frame_to_dnn(task->in_frame, &input, ctx);
+                //fix 1 here, need to modify it to task->inference_analyze_flag, the param need to be passed here
+                ff_proc_from_frame_to_dnn(task->in_frame, &input, 1, ctx);
             }
         }
         input.data = (uint8_t *)input.data
@@ -182,8 +206,12 @@ static void infer_completion_callback(void *args)
     ie_blob_buffer_t blob_buffer;
     DNNData output;
     OVContext *ctx = &task->ov_model->ctx;
+    layout_e input_layout;
 
+    //get output_blob in here
     status = ie_infer_request_get_blob(request->infer_request, task->output_name, &output_blob);
+
+    status = ie_network_get_input_layout(task->ov_model->network, "data", &input_layout);
     if (status != OK) {
         //incorrect output name
         char *model_output_name = NULL;
@@ -402,6 +430,7 @@ static DNNReturnType get_input_ov(void *model, DNNData *input, const char *input
     size_t model_input_count = 0;
     dimensions_t dims;
     precision_e precision;
+    colorformat_e color_format;
     int input_resizable = ctx->options.input_resizable;
 
     status = ie_network_get_inputs_number(ov_model->network, &model_input_count);
@@ -420,6 +449,7 @@ static DNNReturnType get_input_ov(void *model, DNNData *input, const char *input
             ie_network_name_free(&model_input_name);
             status |= ie_network_get_input_dims(ov_model->network, input_name, &dims);
             status |= ie_network_get_input_precision(ov_model->network, input_name, &precision);
+            status |= ie_network_get_color_format(ov_model->network, input_name, &color_format);
             if (status != OK) {
                 av_log(ctx, AV_LOG_ERROR, "Failed to get No.%d input's dims or precision\n", (int)i);
                 return DNN_ERROR;
@@ -429,6 +459,7 @@ static DNNReturnType get_input_ov(void *model, DNNData *input, const char *input
             input->height   = input_resizable ? -1 : dims.dims[2];
             input->width    = input_resizable ? -1 : dims.dims[3];
             input->dt       = precision_to_datatype(precision);
+            input->color_format = ov_colorformat_to_av_pixel_format(color_format);
             return DNN_SUCCESS;
         } else {
             //incorrect input name
@@ -455,6 +486,8 @@ static DNNReturnType get_output_ov(void *model, const char *input_name, int inpu
     TaskItem *ptask = &task;
     IEStatusCode status;
     input_shapes_t input_shapes;
+    layout_e layout;
+    int inference_analyze_flag = 1;
 
     if (!in_frame) {
         av_log(ctx, AV_LOG_ERROR, "Failed to allocate memory for input frame\n");
@@ -502,8 +535,8 @@ static DNNReturnType get_output_ov(void *model, const char *input_name, int inpu
     request.tasks = &ptask;
 
     ret = execute_model_ov(&request);
-    *output_width = out_frame->width;
-    *output_height = out_frame->height;
+    *output_width  = inference_analyze_flag ? in_frame->width : out_frame->width;
+    *output_height = inference_analyze_flag ? in_frame->height : out_frame->height;
 
     av_frame_free(&out_frame);
     av_frame_free(&in_frame);
@@ -580,10 +613,12 @@ DNNReturnType ff_dnn_execute_model_ov(const DNNModel *model, const char *input_n
         return DNN_ERROR;
     }
 
+    /*
     if (!out_frame) {
         av_log(ctx, AV_LOG_ERROR, "out frame is NULL when execute model.\n");
         return DNN_ERROR;
     }
+    */
 
     if (nb_output != 1) {
         // currently, the filter does not need multiple outputs,
@@ -633,10 +668,9 @@ DNNReturnType ff_dnn_execute_model_async_ov(const DNNModel *model, const char *i
         return DNN_ERROR;
     }
 
-    if (!out_frame) {
-        av_log(ctx, AV_LOG_ERROR, "out frame is NULL when async execute model.\n");
-        return DNN_ERROR;
-    }
+    /*if (!out_frame) {
+        av_log(ctx, AV_LOG_INFO, "out frame is NULL when async execute model.\n");
+    }*/
 
     task = av_malloc(sizeof(*task));
     if (!task) {
@@ -689,7 +723,9 @@ DNNAsyncStatusType ff_dnn_get_async_result_ov(const DNNModel *model, AVFrame **i
     }
 
     *in = task->in_frame;
-    *out = task->out_frame;
+    //attention, will here be free twice?
+    *out = task->out_frame ? task->out_frame : task->in_frame;
+    //*out = task->out_frame;
     ff_queue_pop_front(ov_model->task_queue);
     av_freep(&task);
 

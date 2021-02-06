@@ -52,9 +52,56 @@ static const AVOption dnn_detect_options[] = {
 
 AVFILTER_DEFINE_CLASS(dnn_detect);
 
-static int dnn_detect_post_proc(AVFrame *frame, DNNData *model, AVFilterContext *filter_ctx)
+static int config_input(AVFilterLink *inlink)
+{
+    AVFilterContext *context = inlink->dst;
+    DnnDetectContext *ctx = context->priv;
+    DNNReturnType result;
+    DNNData model_input;
+
+    result = ff_dnn_get_input(&ctx->dnnctx, &model_input);
+    if (result != DNN_SUCCESS) {
+        av_log(ctx, AV_LOG_ERROR, "could not get input from the mode\n");
+    }
+    return 0;
+}
+
+static int dnn_detect_post_proc(AVFrame *frame, DNNData *output, AVFilterContext *filter_ctx)
 {
     // read from model output and fill the sidedata in AVFrame
+    // please print the sidedata here  to verify if the output correct.
+    int i = 0;
+    //AVFrameSideData *side_data;
+    int object_size = 7;
+    const float *detections = output->data;
+    int max_proposal_count = 200;
+    int image_id;
+    int label_id;
+    float confidence, max_confidence = 0.0;
+
+    if (detections) {
+        for (i = 0; i < max_proposal_count; i++) {
+            image_id = (int)detections[i * object_size + 0];
+            label_id = (int)detections[i * object_size + 1];
+            confidence = detections[i * object_size + 2];
+            printf("i: %d,image_id: %d, label_id: %d, confidence: %f\n", i, image_id, label_id, confidence);
+            if (image_id < 0 || (size_t)image_id >= 1) {
+                printf("break: image_id: %d, i: %d\n",image_id, i);
+                break;
+            }
+            max_confidence = confidence > max_confidence ? confidence : max_confidence;
+            if (confidence < 0.5)
+                continue;
+            printf("image_id: %d, label_id: %d, confidence: %f\n", image_id, label_id, confidence);
+            /*if (side_data->type == AV_FRAME_DATA_DNN_BBOXES) {
+                printf("found BBOXES in frame side_data\n");
+            } else {
+                printf("found side_data, but it's not BBOXES\n");
+            }
+            */
+        }
+    }
+    printf("max_confidence: %f\n", max_confidence);
     return 0;
 }
 
@@ -101,6 +148,7 @@ static int dnn_detect_filter_frame(AVFilterLink *inlink, AVFrame *in)
 
 static int dnn_detect_activate_sync(AVFilterContext *filter_ctx)
 {
+    //execute with sync
     AVFilterLink *inlink = filter_ctx->inputs[0];
     AVFilterLink *outlink = filter_ctx->outputs[0];
     AVFrame *in = NULL;
@@ -187,6 +235,7 @@ static int dnn_detect_activate_async(AVFilterContext *filter_ctx)
         if (ret < 0)
             return ret;
         if (ret > 0) {
+            //ff_dnn_execute_model_async_ov
             if (ff_dnn_execute_model_async(&ctx->dnnctx, in, NULL) != DNN_SUCCESS) {
                 return AVERROR(EIO);
             }
@@ -197,6 +246,7 @@ static int dnn_detect_activate_async(AVFilterContext *filter_ctx)
     do {
         AVFrame *in_frame = NULL;
         AVFrame *out_frame = NULL;
+        //ff_dnn_get_async_result_ov
         async_state = ff_dnn_get_async_result(&ctx->dnnctx, &in_frame, &out_frame);
         if (out_frame) {
             av_assert0(in_frame == out_frame);
@@ -245,6 +295,7 @@ static const AVFilterPad dnn_detect_inputs[] = {
     {
         .name         = "default",
         .type         = AVMEDIA_TYPE_VIDEO,
+        .config_props = config_input,
     },
     { NULL }
 };

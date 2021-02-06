@@ -47,8 +47,11 @@ typedef struct DNNData{
     void *data;
     DNNDataType dt;
     int width, height, channels;
+    //does this AVPixelFormat need init?
+    enum AVPixelFormat color_format;
 } DNNData;
 
+//typdef one func pointer which name is PRE_POST_PROC
 typedef int (*PRE_POST_PROC)(AVFrame *frame, DNNData *model, AVFilterContext *filter_ctx);
 
 typedef struct DNNModel{
